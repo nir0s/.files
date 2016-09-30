@@ -38,14 +38,16 @@ function install_packages() {
     # yaourt
     install_package "git"
     install_package "sublime-text-dev"
-    cp -R .files/config/sublime-text-3 ~/.config/
+    cp -R ".files/config/sublime-text-3/Preferences.sublime-settings" "~/.config/sublime-text-3/Packages/User/"
+    cp -R ".files/config/sublime-text-3/Package Control.sublime-settings" "~/.config/sublime-text-3/Packages/User/"
+    cp -R ".files/config/sublime-text-3/Package Control.sublime-package" "~/.config/sublime-text-3/Installed Packages"
     install_package "fasd"
     install_package "virtualbox"
     install_package "virtualbox-host-modules-arch"
     install_package "lxc"
     install_package "vagrant"
     install_package "terminator"
-    cp -R .files/config/terminator ~/.config/
+    cp -R ".files/config/terminator" "~/.config/"
     install_package "google-chrome-beta"
     install_package "slack-desktop"
     install_package "dropbox"

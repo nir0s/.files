@@ -1,0 +1,27 @@
+{
+	"bootstrapped": true,
+	"in_process_packages":
+	[
+	],
+	"installed_packages":
+	[
+		"BracketHighlighter",
+		"FontCycler",
+		"GitGutter",
+		"Jinja2",
+		"Logstash Syntax Highlighting",
+		"Material Theme",
+		"Materialize",
+		"Numix Theme",
+		"Package Control",
+		"Pretty JSON",
+		"Python Flake8 Lint",
+		"requirementstxt",
+		"RPM Spec Syntax",
+		"SCSS",
+		"SideBarEnhancements",
+		"SublimeCodeIntel",
+		"SublimeLinter-pyyaml",
+		"Theme - Dark Material"
+	]
+}

@@ -1,0 +1,7 @@
+[user]
+	email = nir36g@gmail.com
+	name = nir0s
+[push]
+	default = simple
+[core]
+	editor = vim
