@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 
 ######
-# Create working environment.
+# Create my working environment.
 # This will install relevant packages, clone relevant repositories,
 # setup a working Python env and.. more..
 ######
 
-# echo -e "Default \e[32mGreen"
 function title() {
     message=$1
 
@@ -22,36 +21,50 @@ function log() {
 }
 
 function error_exit() {
-    message=$1
+    local message=$1
 
     echo "\e[91m$message"
     exit 1
 }
 
 function install_package() {
-    package_name="$1"
+    local package_name="$1"
 
+    log "Installing ${package_name}..."
     pacman -Q ${package_Name} &> /dev/null
     if [ $? -ne 0 ]; then
-        log "Installing ${package_name}..."
         yaourt -S --noconfirm $package_name || error_exit "Failed to install ${package_name}"
-    else
-        log "!!! ${package_name} already installed."
     fi
 }
 
 function install_wmail() {
+    local download_path="$HOME/Downloads"
+
     log "Installing Wmail..."
-    curl -L https://github.com/Thomas101/wmail/releases/download/v1.3.7/WMail_1_3_7_prerelease_linux_x64.tar.gz -o "$HOME/Downloads/wmail.tar.gz"
-    sudo tar -xzvf "$HOME/Downloads/wmail.tar.gz" -C "/opt/wmail"
-    sudo ln -sf "/opt/wmail/wmail" "/usr/bin/wmail"
+    sudo mkdir -p /opt/wmail
+    if [ ! -f "$download_path/wmail.tar.gz" ]; then
+        log "Downloading Wmail..."
+        curl -L https://github.com/Thomas101/wmail/releases/download/v1.3.7/WMail_1_3_7_prerelease_linux_x64.tar.gz -o "$download_path/wmail.tar.gz"
+    fi
+    if [ ! -d "/opt/wmail" ]; then
+        log "Extracting Wmail..."
+        sudo tar -xzvf "$download_path/wmail.tar.gz" -C "/opt/wmail" --strip 1
+    fi
+    if [ ! -f "/usr/bin/wmail" ]; then
+        log "Linking /opt/wmail/WMail to /usr/bin/wmail..."
+        sudo ln -sf "/opt/wmail/WMail" "/usr/bin/wmail"
+    fi
 }
 
 function install_jq() {
-    jq="/usr/bin/jq"
+    local jq="/usr/bin/jq"
 
     log "Installing jq..."
-    sudo curl -L https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -o $jq
+    if [ ! -f "$jq" ]; then
+        log "Downloading jq..."
+        sudo curl -L https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 -o $jq
+    fi
+    log "Setting jq execution permissions..."
     sudo chmod +x $jq
 }
 
@@ -67,9 +80,16 @@ function install_sublime() {
     install_package "sublime-text-dev"
     mkdir -p "$HOME/.config/sublime-text-3/Packages/User"
     mkdir -p "$HOME/.config/sublime-text-3/Installed Packages"
-    cp -R "$HOME/.files-master/config/sublime-text-3/Package Control.sublime-package" "$HOME/.config/sublime-text-3/Installed Packages"
-    cp -R "$HOME/.files-master/config/sublime-text-3/Package Control.sublime-settings" "$HOME/.config/sublime-text-3/Packages/User/"
-    cp -R "$HOME/.files-master/config/sublime-text-3/Preferences.sublime-settings" "$HOME/.config/sublime-text-3/Packages/User/"
+    cp -R "$SETUP_PATH/config/sublime-text-3/Package Control.sublime-package" "$HOME/.config/sublime-text-3/Installed Packages"
+    cp -R "$SETUP_PATH/config/sublime-text-3/Package Control.sublime-settings" "$HOME/.config/sublime-text-3/Packages/User/"
+    cp -R "$SETUP_PATH/config/sublime-text-3/Preferences.sublime-settings" "$HOME/.config/sublime-text-3/Packages/User/"
+}
+
+function activate_virtualenvwrapper() {
+    export VIRTUALENVWRAPPER_VIRTUALENV="/usr/bin/virtualenv"
+    export VIRTUALENVWRAPPER_PYTHON="/usr/bin/python2.7"
+    export WORKON_HOME="$HOME/.virtualenvs"
+    source "/usr/bin/virtualenvwrapper.sh"
 }
 
 function install_packages() {
@@ -78,14 +98,13 @@ function install_packages() {
     # yaourt
     install_package "vim"
     install_package "git"
-    install_package "ttf-roboto-mono"
     install_sublime
     install_package "fasd"
     install_package "virtualbox"
     install_package "lxc"
     install_package "vagrant"
     install_package "terminator"
-    cp -R "$HOME/.files-master/config/terminator" "$HOME/.config/"
+    cp -R "$SETUP_PATH/config/terminator" "$HOME/.config/"
     install_package "google-chrome-beta"
     install_package "slack-desktop"
     install_package "dropbox"
@@ -95,19 +114,37 @@ function install_packages() {
     # direct download
     install_wmail
     install_jq
+
+    # install_package "ttf-roboto-mono"
     # install_consul
     # install_vault
 }
 
+function install_vagrant_plugin() {
+    local plugin_name="$1"
+
+    vagrant plugin list | grep ${plugin_name} &> /dev/null
+    if [ $? -ne 0 ]; then
+        log "Installing vagrant plugin ${plugin_name}..."
+        vagrant plugin install $plugin_name || error_exit "Failed to install ${plugin_name}"
+    fi
+}
+
 function install_vagrant_plugins() {
-    vagrant plugin install vagrant-vbguest vagrant-share vagrant-lxc
+    install_vagrant_plugin vagrant-vbguest
+    install_vagrant_plugin vagrant-share
+    install_vagrant_plugin vagrant-lxc
 }
 
 function pip_install() {
-    package=$1
+    local package_name=$1
 
-    log "Installing $package..."
-    sudo pip install $package
+    log "Installing $package_name..."
+
+    pip freeze | tr '[:upper:]' '[:lower:]' | grep ${package_name} &> /dev/null
+    if [ $? -ne 0 ]; then
+        sudo pip install $package_name || error_exit "Failed to install ${package_name}"
+    fi
 }
 
 function prepare_python_env() {
@@ -119,8 +156,15 @@ function prepare_python_env() {
         curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
     fi
     log "Installing pip for python2 and python3..."
-    sudo python3 /tmp/get-pip.py
-    sudo python2 /tmp/get-pip.py
+
+    path_to_executable=$(which pip3)
+    if [ ! -x "$path_to_executable" ] ; then
+       sudo python3 /tmp/get-pip.py
+    fi
+    path_to_executable=$(which pip2)
+    if [ ! -x "$path_to_executable" ] ; then
+       sudo python2 /tmp/get-pip.py
+    fi
     log "Making pip2 the default..."
     sudo ln -sf /usr/bin/pip2 /usr/bin/pip
 
@@ -135,20 +179,18 @@ function prepare_python_env() {
 }
 
 function clone_repo() {
-    path=$1
-    destination="$HOME/repos/${2:-path}"
+    local path=$1
+    local destination="$REPOS_HOME/${2:-path}"
 
     log "Cloning $path..."
     if [ ! -d "${destination}" ]; then
        git clone "git@github.com:${path}" ${destination}
-    else
-        log "$path already exists. Assuming cloned."
     fi
 }
 
 function create_dev_env() {
-    tool=$1
-    repo_path="$HOME/repos/nir0s/${tool}"
+    local tool=$1
+    local repo_path="$REPOS_HOME/nir0s/${tool}"
 
     log "Creating development environment for $tool..."
     clone_repo "nir0s/${tool}"
@@ -159,9 +201,9 @@ function create_dev_env() {
 }
 
 function setup_private_dev_envs() {
-    title "Creating development environments..."
-    personal_repos_path="$HOME/repos/nir0s"
+    local personal_repos_path="$REPOS_HOME/nir0s"
 
+    title "Creating development environments..."
     activate_virtualenvwrapper
     mkdir -p $personal_repos_path
 
@@ -172,23 +214,16 @@ function setup_private_dev_envs() {
     create_dev_env "logrotated"
 }
 
-function activate_virtualenvwrapper() {
-    export VIRTUALENVWRAPPER_VIRTUALENV="/usr/bin/virtualenv"
-    export VIRTUALENVWRAPPER_PYTHON="/usr/bin/python2.7"
-    export WORKON_HOME="$HOME/.virtualenvs"
-    source "/usr/bin/virtualenvwrapper.sh"
-}
-
 function setup_cloudify_dev_env() {
     title "Setting up Cloudify development environemnt..."
-    cloudify_repos_path="$HOME/repos/cloudify"
+    local cloudify_repos_path="$REPOS_HOME/cloudify"
 
     mkdir -p $cloudify_repos_path
     activate_virtualenvwrapper
     mkvirtualenv clue
     workon clue
     pip install clue
-    clue env create -d ~/repos/cloudify --clone-method ssh
+    clue env create -d $REPOS_HOME/cloudify --clone-method ssh
     clue apply
 
     clone_repo "cloudify-cosmo/wagon" "cloudify/wagon"
@@ -207,20 +242,23 @@ function config_git() {
 
 function deploy_dotfiles() {
     title "Deploying .files..."
-    cp $HOME/.files-master/.bashrc $HOME/.bashrc
-    cp $HOME/.files-master/.inputrc $HOME/.inputrc
+    cp $SETUP_PATH/.bashrc $HOME/.bashrc
+    cp $SETUP_PATH/.inputrc $HOME/.inputrc
 }
 
 function main() {
     title "Preparing $(hostname)..."
-    # install_packages
-    # install_vagrant_plugins
-    # clone_repo "nir0s/.files"
-    # prepare_python_env
-    # setup_private_dev_envs
+    install_packages
+    install_vagrant_plugins
+    clone_repo "nir0s/.files"
+    prepare_python_env
+    setup_private_dev_envs
     setup_cloudify_dev_env
     config_git
     deploy_dotfiles
 }
+
+SETUP_PATH='/tmp/.files-master'
+REPOS_HOME="$HOME/repos"
 
 main
