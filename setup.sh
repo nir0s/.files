@@ -199,6 +199,18 @@ function setup_cloudify_dev_env() {
 
 }
 
+function config_git() {
+    title "Configuring git..."
+    git config --global user.email "nir36g@gmail.com"
+    git config --global user.name "Nir Cohen"
+}
+
+function deploy_dotfiles() {
+    title "Deploying .files..."
+    cp $HOME/.files-master/.bashrc $HOME/.bashrc
+    cp $HOME/.files-master/.inputrc $HOME/.inputrc
+}
+
 function main() {
     title "Preparing $(hostname)..."
     # install_packages
@@ -207,8 +219,8 @@ function main() {
     # prepare_python_env
     # setup_private_dev_envs
     setup_cloudify_dev_env
-    cp $HOME/.files-master/.bashrc $HOME/.bashrc
-    cp $HOME/.files-master/.inputrc $HOME/.inputrc
+    config_git
+    deploy_dotfiles
 }
 
 main
