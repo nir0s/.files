@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 ######
-# This is written according to Google's shell style guide found at:
+# This is written on par with Google's shell style guide found at:
 # https://google.github.io/styleguide/shell.xml
 #
 # Create my working Arch-based working environment.
@@ -14,14 +14,15 @@
 ######
 # set -o nounset fails on undefined global variables
 # set -o errexit fails on errors
-# Note: https://groups.google.com/forum/?fromgroups#!topic/gnu.bash.bug/-9ySnEo1WrQ
+# https://groups.google.com/forum/?fromgroups#!topic/gnu.bash.bug/-9ySnEo1WrQ
 # set -o pipeline fails if any command in any pipeline fails
 # shopt -s failglob fails if any globs did not get expanded
 ######
 
+# This would be awesome if virtualenvwrapper.sh didn't have an unbound variable
 # set -o nounset
 # set -o errexit
-# set -o pipefail
+set -o pipefail
 # shopt -s failglob
 
 readonly SETUP_PATH='/tmp/.files-master'
@@ -178,34 +179,6 @@ function activate_virtualenvwrapper() {
   source "/usr/bin/virtualenvwrapper.sh"
 }
 
-function install_packages() {
-  title "Installing relevant packages..."
-  mkdir -p ${HOME}/.config
-  # yaourt
-  install_package "vim"
-  install_package "git"
-  install_sublime
-  install_package "fasd"
-  install_package "virtualbox"
-  install_package "lxc"
-  install_package "vagrant"
-  install_package "terminator"
-  cp -R "${SETUP_PATH}/config/terminator" "${HOME}/.config/"
-  install_package "google-chrome-beta"
-  install_package "slack-desktop"
-  install_package "dropbox"
-  install_package "teamviewer"
-  install_package "gnome-shell-extension-taskbar"
-
-  # direct download
-  install_wmail
-  install_jq
-
-  # install_package "ttf-roboto-mono"
-  # install_consul
-  # install_vault
-}
-
 function install_vagrant_plugin() {
   #######################################
   # Install a vagrant plugin if it wasn't already installed
@@ -222,12 +195,6 @@ function install_vagrant_plugin() {
   fi
 }
 
-function install_vagrant_plugins() {
-  install_vagrant_plugin vagrant-vbguest
-  install_vagrant_plugin vagrant-share
-  install_vagrant_plugin vagrant-lxc
-}
-
 function pip_install() {
   #######################################
   # Install a package from PyPI if it wasn't already installed
@@ -238,50 +205,10 @@ function pip_install() {
   local package_name="$1"
 
   log "Installing ${package_name}..."
-
   pip freeze | tr '[:upper:]' '[:lower:]' | grep ${package_name} &> /dev/null
   if [[ $? -ne 0 ]]; then
     sudo pip install ${package_name}
   fi
-}
-
-function prepare_python_env() {
-  #######################################
-  # Install pip for python2 and python3 and make pip2
-  #######################################
-
-  title "Setting up Python environment..."
-
-  # Make idempotent
-  if [[ ! -f '/tmp/get-pip.py' ]]; then
-    log "Downloading get-pip.py..."
-    curl "https://bootstrap.pypa.io/get-pip.py" -o "/tmp/get-pip.py"
-  fi
-  log "Installing pip for python2 and python3..."
-
-  local=path_to_executable
-
-  path_to_executable=$(which pip3)
-  if [[ ! -x "${path_to_executable}" ]]; then
-    sudo python3 "/tmp/get-pip.py"
-  fi
-  path_to_executable=$(which pip2)
-  if [[ ! -x "${path_to_executable}" ]]; then
-    sudo python2 "/tmp/get-pip.py"
-  fi
-  log "Making pip2 the default..."
-  sudo ln -sf "/usr/bin/pip2" "/usr/bin/pip"
-}
-
-function install_common_python_packages() {
-  pip_install "pip --upgrade"
-  pip_install "virtualenv"
-  pip_install "virtualenvwrapper"
-  pip_install "wagon"
-  pip_install "serv"
-  pip_install "ipython"
-  pip_install "distro"
-  pip_install "ghost"
 }
 
 function clone_repo() {
@@ -320,6 +247,79 @@ function create_dev_env() {
   mkvirtualenv ${tool}
   log "Installing ${tool}..."
   ${HOME}/.virtualenvs/${tool}/bin/pip install -e ${repo_path}
+}
+
+function install_packages() {
+  title "Installing relevant packages..."
+  mkdir -p ${HOME}/.config
+
+  # yaourt
+  install_package "vim"
+  install_package "git"
+  install_sublime
+  install_package "fasd"
+  install_package "virtualbox"
+  install_package "lxc"
+  install_package "vagrant"
+  install_package "terminator"
+  cp -R "${SETUP_PATH}/config/terminator" "${HOME}/.config/"
+  install_package "google-chrome-beta"
+  install_package "slack-desktop"
+  install_package "dropbox"
+  install_package "teamviewer"
+  install_package "gnome-shell-extension-taskbar"
+
+  # direct download
+  install_wmail
+  install_jq
+
+  # install_package "ttf-roboto-mono"
+  # install_consul
+  # install_vault
+}
+
+function install_vagrant_plugins() {
+  install_vagrant_plugin vagrant-vbguest
+  install_vagrant_plugin vagrant-share
+  install_vagrant_plugin vagrant-lxc
+}
+
+function prepare_python_env() {
+  #######################################
+  # Install pip for python2 and python3 and make pip2
+  #######################################
+
+  title "Setting up Python environment..."
+
+  if [[ ! -f '/tmp/get-pip.py' ]]; then
+    log "Downloading get-pip.py..."
+    curl "https://bootstrap.pypa.io/get-pip.py" -o "/tmp/get-pip.py"
+  fi
+  log "Installing pip for python2 and python3..."
+
+  local=path_to_executable
+
+  path_to_executable=$(which pip3)
+  if [[ ! -x "${path_to_executable}" ]]; then
+    sudo python3 "/tmp/get-pip.py"
+  fi
+  path_to_executable=$(which pip2)
+  if [[ ! -x "${path_to_executable}" ]]; then
+    sudo python2 "/tmp/get-pip.py"
+  fi
+  log "Making pip2 the default..."
+  sudo ln -sf "/usr/bin/pip2" "/usr/bin/pip"
+}
+
+function install_common_python_packages() {
+  pip_install "pip --upgrade"
+  pip_install "virtualenv"
+  pip_install "virtualenvwrapper"
+  pip_install "wagon"
+  pip_install "serv"
+  pip_install "ipython"
+  pip_install "distro"
+  pip_install "ghost"
 }
 
 function setup_private_dev_envs() {
