@@ -368,8 +368,8 @@ function config_git() {
 
 function deploy_dotfiles() {
   title "Deploying .files..."
-  cp "${SETUP_PATH}/.bashrc" "${HOME}/.bashrc"
-  cp "${SETUP_PATH}/.inputrc" "${HOME}/.inputrc"
+  cp "${SETUP_PATH}/dotfiles/.bashrc" "${HOME}/.bashrc"
+  cp "${SETUP_PATH}/dotfiles/.inputrc" "${HOME}/.inputrc"
 }
 
 function main() {
