@@ -143,6 +143,14 @@ function install_jq() {
   sudo chmod +x ${jq}
 }
 
+function install_topicons() {
+  local destination="${HOME}/Downloads/TopIcons"
+  git clone https://github.com/phocean/TopIcons.git ${destination}
+  pushd ${destination}
+  make &&
+  popd
+}
+
 function install_vault() {
   curl https://releases.hashicorp.com/vault/0.6.1/vault_0.6.1_linux_amd64.zip
 }
@@ -272,6 +280,7 @@ function install_packages() {
   install_package "gnome-shell-extension-taskbar"
 
   # direct download
+  install_topicons
   install_wmail
   install_jq
 
