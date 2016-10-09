@@ -258,6 +258,8 @@ function install_packages() {
   install_package "git"
   install_sublime
   install_package "fasd"
+  # For dev purposes.
+  install_package "python26"
   install_package "virtualbox"
   install_package "lxc"
   install_package "vagrant"
