@@ -378,6 +378,11 @@ function config_git() {
   git config --global user.name "Nir Cohen"
 }
 
+function config_docker() {
+  sudo systemctl enable docker
+  sudo systemctl start docker
+}
+
 function deploy_dotfiles() {
   title "Deploying .files..."
   cp "${SETUP_PATH}/dotfiles/.bashrc" "${HOME}/.bashrc"
@@ -394,6 +399,7 @@ function main() {
   setup_private_dev_envs
   setup_cloudify_dev_env
   config_git
+  config_docker
   deploy_dotfiles
 }
 
