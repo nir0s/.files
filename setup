@@ -270,6 +270,7 @@ function install_packages() {
   install_package "python26"
   install_package "virtualbox"
   install_package "lxc"
+  install_package "docker"
   install_package "vagrant"
   install_package "terminator"
   cp -R "${SETUP_PATH}/config/terminator" "${HOME}/.config/"
