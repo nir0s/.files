@@ -3,6 +3,15 @@ export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python2.7
 export WORKON_HOME=$HOME/.virtualenvs
 source /usr/bin/virtualenvwrapper.sh
 
+GO_WORKDIR="$HOME/repos/nir0s/go"
+mkdir -p $GO_WORKDIR
+export PATH=$PATH:/usr/local/go/bin
+export GOPATH=$GO_WORKDIR
+export PATH=$PATH:$GOPATH/bin
+
+export PATH=$PATH:/opt/vault
+alias setvault='export VAULT_ADDR="http://vault.gspaces.com:8200"'
+
 #alias ll='ls -la'
 
 # fasd is the best :) Should always be enabled. z rules the world.
@@ -48,23 +57,47 @@ alias ga='git add '
 alias gb='git branch '
 alias gc='git commit -am '
 alias gd='git diff'
-alias go='git checkout '
+alias gco='git checkout '
 alias gk='gitk --all&'
 alias gx='gitx --all'
 alias gp='git pull'
 alias gl='git log --oneline -n 10'
 alias gr='git rebase -i'
+alias autorebase='git checkout master && git pull && git checkout - && git rebase master'
+alias tf='terraform'
 
 alias png='ping 8.8.8.8'
+alias pngd='ping www.google.com'
+
+alias open='google-chrome-beta'
 
 # 99% of the time using this virtualenv anyway
-source ~/.virtualenvs/cloudify/bin/activate
+VENV_ON_SHELL_LOGIN='strigo'
+source ~/.virtualenvs/${VENV_ON_SHELL_LOGIN}/bin/activate
+
+export GHOST_STASH_PATH="~/Dropbox/work/strigo/stash.json[main]"
+export GHOST_PASSPHRASE=$(cat ~/Dropbox/work/strigo/x)
 
 # Easy cloning of cloudify repos...
 function ccr() {
-	repo=$1
-	org=${2:-cloudify-cosmo}
+	local repo=$1
+	local org=${2:-cloudify-cosmo}
+
 	echo "Cloning $2/$1 to ~/repos/cloudify/$1..."
 	git clone git@github.com:${org}/${repo} ~/repos/cloudify/${repo}
+}
+
+function csr() {
+	local repo=$1
+	local org="strigoio"
+
+	echo "Cloning $2/$1 to ~/repos/strigo/$1..."
+	git clone git@bitbucket.org:${org}/${repo}.git ~/repos/strigo/${repo}
+}
+
+function setvenv() {
+	local new_venv=$1
+
+	rpx in-path "~/.bashrc" --replace "VENV_ON_SHELL_LOGIN='.*'" --replace-with "VENV_ON_SHELL_LOGIN='${new_venv}'"
 }
 

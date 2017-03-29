@@ -16,7 +16,7 @@
 # set -o errexit fails on errors
 # https://groups.google.com/forum/?fromgroups#!topic/gnu.bash.bug/-9ySnEo1WrQ
 # set -o pipeline fails if any command in any pipeline fails
-# shopt -s failglob fails if any globs did not get expanded
+# shopt -s failglob fails if any globs did not expand
 ######
 
 # This would be awesome if virtualenvwrapper.sh didn't have an unbound variable
@@ -145,11 +145,18 @@ function install_jq() {
 
 function install_topicons() {
   local destination="${HOME}/Downloads/TopIcons"
+
   git clone https://github.com/phocean/TopIcons.git ${destination}
   pushd ${destination}
   make &&
   popd
 }
+
+function install_hub() {
+  # https://hub.github.com/
+  curl https://github.com/github/hub/releases/download/v2.3.0-pre8/hub-linux-amd64-2.3.0-pre8.tgz
+}
+
 
 function install_vault() {
   curl https://releases.hashicorp.com/vault/0.6.1/vault_0.6.1_linux_amd64.zip
@@ -178,6 +185,27 @@ function install_sublime() {
   cp -R \
     "${SETUP_PATH}/config/sublime-text-3/Preferences.sublime-settings" \
     "${HOME}/.config/sublime-text-3/Packages/User/"
+}
+
+function install_go() {
+
+  local version="1.7.3"
+  local os="linux"
+  local arch="amd64"
+
+  local tarfile_name="go${version}.${os}-${arch}.tar.gz"
+
+  local download_path="${HOME}/Downloads"
+  local go="/usr/local/go"
+  local go_source="https://storage.googleapis.com/golang/${tarfile_name}"
+
+  log "Installing go..."
+  if [[ ! -d "${go}" ]]; then
+    log "Downloading go..."
+    pushd ${download_path}
+    curl -L -O ${go_source}
+    sudo tar -C /usr/local -xzf "${download_path}/${tarfile_name}"
+  fi
 }
 
 function activate_virtualenvwrapper() {
@@ -254,7 +282,9 @@ function create_dev_env() {
   log "Creating virtualenv..."
   mkvirtualenv ${tool}
   log "Installing ${tool}..."
-  ${HOME}/.virtualenvs/${tool}/bin/pip install -e ${repo_path}
+  ${HOME}/.virtualenvs/${tool}/bin/pip install tox
+  ${HOME}/.virtualenvs/${tool}/bin/pip install twine
+  ${HOME}/.virtualenvs/${tool}/bin/pip install -e ${repo_path} -r ${repo_path}/dev-requirements.txt
 }
 
 function install_packages() {
@@ -279,6 +309,7 @@ function install_packages() {
   install_package "dropbox"
   install_package "teamviewer"
   install_package "gnome-shell-extension-taskbar"
+  install_go
 
   # direct download
   install_topicons
@@ -319,7 +350,7 @@ function prepare_python_env() {
   if [[ ! -x "${path_to_executable}" ]]; then
     sudo python2 "/tmp/get-pip.py"
   fi
-  log "Making pip2 the default..."
+  log "Setting pip2 as default..."
   sudo ln -sf "/usr/bin/pip2" "/usr/bin/pip"
 }
 
@@ -332,6 +363,8 @@ function install_common_python_packages() {
   pip_install "ipython"
   pip_install "distro"
   pip_install "ghost"
+  pip_install "repex"
+  pip_install "httpie"
 }
 
 function setup_private_dev_envs() {
