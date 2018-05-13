@@ -5,3 +5,29 @@
 	default = simple
 [core]
 	editor = vim
+[alias]
+	list-aliases = config --get-regexp alias
+	praise = blame
+	d = diff
+	wd = diff --word-diff
+	r = rebase -i
+	l = log --oneline -n 15
+	recent = for-each-ref --count=10 --sort=-committerdate refs/heads/ --format=\"%(refname:short)\"
+	overview = log --all --oneline --no-merges -n 15
+	recap = log --all --oneline --no-merges --author=nir36g@gmail.com -n 20
+	today = log --since=00:00:00 --all --no-merges --oneline --author=nir36g@gmail.com
+	graph = log --graph --all --decorate --stat --date=iso
+	autor = !git checkout master && git pull && git checkout - && git rebase master
+	ar = !git checkout master && git pull && git checkout - && git rebase master
+	b = branch
+	close = branch -D
+	s = status
+	cp = cherry-pick
+	co = checkout
+	cn = checkout -b
+	cm = checkout master
+	cam = commit -am
+	undo = git reset --hard
+	pn = !git push -u origin $(git rev-parse --abbrev-ref HEAD)
+	make-env = commit -am make_env --allow-empty
+
